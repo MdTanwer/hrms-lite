@@ -7,6 +7,7 @@ import {
   GridIcon,
   HorizontaLDots,
   TableIcon,
+  GroupIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -22,6 +23,11 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Dashboard",
     path: "/",
+  },
+  {
+    icon: <GroupIcon />,
+    name: "Employee Management",
+    path: "/employees",
   },
   {
     name: "Tables",
