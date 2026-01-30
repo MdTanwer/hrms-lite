@@ -1,6 +1,5 @@
 import logging
 from typing import Optional, List, Dict, Any, Type
-from datetime import datetime, timedelta
 from pymongo.errors import DuplicateKeyError
 from app.services.base import BaseRepository
 from app.models.employee import EmployeeInDB
@@ -99,27 +98,6 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
             logger.error(f"Error getting employees by department {department}: {e}")
             raise
 
-    async def get_by_status(
-        self, 
-        db: Any, 
-        status: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[EmployeeInDB]:
-        try:
-            filter_query = {"status": status}
-            sort_query = [("full_name", 1)]
-            
-            return await self.get_multi(
-                db,
-                skip=skip,
-                limit=limit,
-                filter_query=filter_query,
-                sort_query=sort_query
-            )
-        except Exception as e:
-            logger.error(f"Error getting employees by status {status}: {e}")
-            raise
 
     async def search_employees(
         self,
@@ -134,8 +112,7 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
                 "$or": [
                     {"full_name": {"$regex": regex_pattern, "$options": "i"}},
                     {"email": {"$regex": regex_pattern, "$options": "i"}},
-                    {"employee_id": {"$regex": regex_pattern, "$options": "i"}},
-                    {"position": {"$regex": regex_pattern, "$options": "i"}}
+                    {"employee_id": {"$regex": regex_pattern, "$options": "i"}}
                 ]
             }
             
@@ -168,19 +145,6 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
             logger.error(f"Error getting department stats: {e}")
             raise
 
-    async def get_recent_hires(self, db: Any, days: int = 30, limit: int = 5) -> List[EmployeeInDB]:
-        try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
-            filter_query = {"start_date": {"$gte": cutoff_date}}
-            sort_query = [("start_date", -1)]
-            
-            return await self.get_multi(
-                db, skip=0, limit=limit,
-                filter_query=filter_query, sort_query=sort_query
-            )
-        except Exception as e:
-            logger.error(f"Error getting recent hires from last {days} days: {e}")
-            raise
 
     async def create(self, db: Any, obj_in: EmployeeInDB) -> EmployeeInDB:
         return await super().create(db, obj_in)
@@ -227,29 +191,16 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
     async def get_employee_stats(self, db: Any) -> Dict[str, Any]:
         try:
             total_employees = await self.count(db)
-            
-            status_pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
-            status_cursor = db[self.collection_name].aggregate(status_pipeline)
-            status_results = await status_cursor.to_list(length=None)
-            status_counts = {result["_id"]: result["count"] for result in status_results}
-            
             department_stats = await self.get_department_stats(db)
-            
-            salary_pipeline = [{"$group": {"_id": None, "average_salary": {"$avg": "$salary"}}}]
-            salary_cursor = db[self.collection_name].aggregate(salary_pipeline)
-            salary_result = await salary_cursor.to_list(length=1)
-            average_salary = salary_result[0]["average_salary"] if salary_result else 0
-            
-            recent_hires = await self.get_recent_hires(db, days=30, limit=5)
             
             return {
                 "total_employees": total_employees,
-                "active_employees": status_counts.get("active", 0),
-                "inactive_employees": status_counts.get("inactive", 0),
-                "on_leave_employees": status_counts.get("on-leave", 0),
+                "active_employees": 0,
+                "inactive_employees": 0,
+                "on_leave_employees": 0,
                 "department_breakdown": department_stats,
-                "average_salary": round(average_salary, 2),
-                "recent_hires": recent_hires
+                "average_salary": 0,
+                "recent_hires": []
             }
             
         except Exception as e:

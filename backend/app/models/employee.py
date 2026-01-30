@@ -15,9 +15,9 @@ class EmployeeBase(BaseModel):
         if not v:
             raise ValueError('Employee ID is required')
         v = v.upper()
-        employee_id_pattern = r'^EMP\d{3,6}$'
+        employee_id_pattern = r'^EMP\d{1,6}$'
         if not re.match(employee_id_pattern, v):
-            raise ValueError('Invalid employee ID format. Must be EMP followed by 3-6 digits (e.g., EMP001, EMP1234)')
+            raise ValueError('Invalid employee ID format. Must be EMP followed by 1-6 digits (e.g., EMP1, EMP001, EMP1234)')
         return v
 
     @field_validator('email')

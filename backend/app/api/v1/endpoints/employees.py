@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.database import get_database
 from app.services.employee import employee_repository
-from app.models.employee import EmployeeCreate, EmployeeUpdate, EmployeeInDB
+from app.models.employee import EmployeeCreate, EmployeeInDB
 from app.schemas.employee import EmployeeListResponse, EmployeeStatsResponse
 from app.schemas.common import APIResponse, SuccessResponse
 from bson import ObjectId
@@ -56,7 +56,6 @@ async def get_employees(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     department: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
@@ -68,15 +67,11 @@ async def get_employees(
                     {"full_name": {"$regex": search, "$options": "i"}},
                     {"email": {"$regex": search, "$options": "i"}},
                     {"employee_id": {"$regex": search, "$options": "i"}},
-                    {"position": {"$regex": search, "$options": "i"}}
                 ]
             })
         elif department:
             employees = await employee_repository.get_by_department(db, department, skip, limit)
             total = await employee_repository.count(db, {"department": department})
-        elif status:
-            employees = await employee_repository.get_by_status(db, status, skip, limit)
-            total = await employee_repository.count(db, {"status": status})
         else:
             employees = await employee_repository.get_multi(db, skip, limit)
             total = await employee_repository.count(db)
@@ -156,7 +151,7 @@ async def get_employee_by_object_id(
 @router.put("/{employee_id}", response_model=APIResponse[EmployeeInDB])
 async def update_employee(
     employee_id: str,
-    employee_data: EmployeeUpdate,
+    employee_data: EmployeeCreate,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     try:
@@ -193,44 +188,6 @@ async def update_employee(
         )
 
 
-@router.patch("/{employee_id}", response_model=APIResponse[EmployeeInDB])
-async def partial_update_employee(
-    employee_id: str,
-    employee_data: EmployeeUpdate,
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    try:
-        current_employee = await employee_repository.get_by_employee_id(db, employee_id)
-        if not current_employee:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Employee {employee_id} not found"
-            )
-        
-        updated_employee = await employee_repository.update(db, str(current_employee.id), employee_data)
-        if not updated_employee:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Employee {employee_id} not found"
-            )
-        
-        return APIResponse(
-            data=updated_employee,
-            message="Employee updated successfully"
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error partially updating employee {employee_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update employee"
-        )
 
 
 @router.delete("/{employee_id}", response_model=SuccessResponse)
@@ -248,14 +205,15 @@ async def delete_employee(
         
         attendance_count = await db["attendance"].count_documents({"employee_id": employee_id.upper()})
         if attendance_count > 0:
-            update_data = EmployeeUpdate(status="inactive")
-            await employee_repository.update(db, str(current_employee.id), update_data)
-            message = f"Employee {employee_id} deactivated (soft delete due to attendance records)"
-        else:
-            await employee_repository.delete(db, str(current_employee.id))
-            message = f"Employee {employee_id} deleted successfully"
+            # Employee has attendance records, cannot be deleted
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Employee {employee_id} has attendance records and cannot be deleted"
+            )
         
-        return SuccessResponse(message=message)
+        await employee_repository.delete(db, str(current_employee.id))
+        
+        return SuccessResponse(message=f"Employee {employee_id} deleted successfully")
     except HTTPException:
         raise
     except Exception as e:

@@ -1,6 +1,7 @@
-from typing import Optional, List, Dict
+from typing import List, Dict
 from datetime import datetime, date
 from pydantic import BaseModel, Field
+from app.models.employee import EmployeeInDB
 
 
 class EmployeeBase(BaseModel):
@@ -20,14 +21,6 @@ class EmployeeCreate(EmployeeBase):
     pass
 
 
-class EmployeeUpdate(BaseModel):
-    """Schema for updating employee records"""
-    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    email: Optional[str] = None
-    department: Optional[str] = None
-    position: Optional[str] = None
-    salary: Optional[float] = Field(None, gt=0)
-    status: Optional[str] = None
 
 
 class EmployeeResponse(EmployeeBase):
@@ -46,7 +39,7 @@ class EmployeeListResponse(BaseModel):
     page: int = Field(..., ge=1, description="Current page number")
     page_size: int = Field(..., ge=1, le=100, description="Items per page")
     total_pages: int = Field(..., ge=0, description="Total number of pages")
-    data: List[Dict] = Field(..., description="List of employees")
+    data: List[EmployeeInDB] = Field(..., description="List of employees")
 
 
 class EmployeeStatsResponse(BaseModel):
