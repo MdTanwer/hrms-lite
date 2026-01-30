@@ -104,12 +104,28 @@ def add_exception_handlers(app: FastAPI):
         errors = []
         for error in exc.errors():
             field_path = " -> ".join(str(x) for x in error["loc"])
+            
+            # Safely serialize input and ctx values
+            input_val = error.get("input")
+            ctx_val = error.get("ctx")
+            
+            # Convert to JSON-serializable format
+            try:
+                input_serializable = str(input_val) if input_val is not None else None
+            except Exception:
+                input_serializable = "[Non-serializable input]"
+                
+            try:
+                ctx_serializable = str(ctx_val) if ctx_val is not None else None
+            except Exception:
+                ctx_serializable = "[Non-serializable context]"
+            
             errors.append({
                 "field": field_path,
                 "message": error["msg"],
                 "type": error["type"],
-                "input": error.get("input"),
-                "ctx": error.get("ctx")
+                "input": input_serializable,
+                "ctx": ctx_serializable
             })
         
         return JSONResponse(
@@ -199,7 +215,13 @@ def add_exception_handlers(app: FastAPI):
         request_id = getattr(request.state, 'request_id', 'unknown')
         
         # Sanitize error details based on environment
-        error_message = "Internal server error" if not settings.DEBUG else str(exc)
+        if not settings.DEBUG:
+            error_message = "Internal server error"
+        else:
+            try:
+                error_message = f"{type(exc).__name__}: {str(exc)}"
+            except Exception:
+                error_message = f"{type(exc).__name__}: [Error details not serializable]"
         
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

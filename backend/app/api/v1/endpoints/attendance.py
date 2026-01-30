@@ -3,16 +3,17 @@ from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.api.deps import get_database
-from app.crud.attendance import attendance_crud
-from app.crud.employee import employee_crud
+from app.services.attendance import attendance_repository
+from app.services.employee import employee_repository
 from app.models.attendance import AttendanceCreate, AttendanceUpdate, AttendanceInDB
 from app.schemas.attendance import (
     AttendanceListResponse, 
     AttendanceStatsResponse, 
-    EmployeeAttendanceReport
+    EmployeeAttendanceReport,
+    AttendanceStats
 )
 from app.schemas.common import APIResponse, ErrorResponse, SuccessResponse
-from bson import ObjectId, errors as bson_errors
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ async def mark_attendance(
             )
         
         # Create attendance (validation handled in CRUD)
-        attendance = await attendance_crud.create(db, attendance_data)
+        attendance = await attendance_repository.create(db, attendance_data)
         
         logger.info(f"Attendance marked successfully for {attendance_data.employee_id} on {attendance_data.date}")
         return APIResponse(
@@ -154,7 +155,7 @@ async def bulk_mark_attendance(
                 )
         
         # Create bulk attendance (validation handled in CRUD)
-        created_attendance = await attendance_crud.bulk_mark_attendance(db, attendance_list)
+        created_attendance = await attendance_repository.bulk_mark_attendance(db, attendance_list)
         
         logger.info(f"Bulk attendance marked successfully: {len(created_attendance)} records")
         return APIResponse(
@@ -216,10 +217,10 @@ async def get_attendance(
         # Build filter based on parameters
         if start_date and end_date:
             if employee_id:
-                attendance = await attendance_crud.get_by_date_range(
+                attendance = await attendance_repository.get_by_date_range(
                     db, start_date, end_date, employee_id, skip, limit
                 )
-                total = await attendance_crud.count(db, {
+                total = await attendance_repository.count(db, {
                     "employee_id": employee_id.upper(),
                     "date": {
                         "$gte": datetime.combine(start_date, datetime.min.time()),
@@ -227,26 +228,26 @@ async def get_attendance(
                     }
                 })
             else:
-                attendance = await attendance_crud.get_by_date_range(
+                attendance = await attendance_repository.get_by_date_range(
                     db, start_date, end_date, None, skip, limit
                 )
-                total = await attendance_crud.count(db, {
+                total = await attendance_repository.count(db, {
                     "date": {
                         "$gte": datetime.combine(start_date, datetime.min.time()),
                         "$lte": datetime.combine(end_date, datetime.max.time())
                     }
                 })
         elif employee_id:
-            attendance = await attendance_crud.get_by_employee(db, employee_id, skip, limit)
-            total = await attendance_crud.count(db, {"employee_id": employee_id.upper()})
+            attendance = await attendance_repository.get_by_employee(db, employee_id, skip, limit)
+            total = await attendance_repository.count(db, {"employee_id": employee_id.upper()})
         else:
             # Get all attendance with basic filtering
             filter_query = {}
             if status:
                 filter_query["status"] = status
             
-            attendance = await attendance_crud.get_multi(db, skip, limit, filter_query)
-            total = await attendance_crud.count(db, filter_query)
+            attendance = await attendance_repository.get_multi(db, skip, limit, filter_query)
+            total = await attendance_repository.count(db, filter_query)
         
         total_pages = (total + limit - 1) // limit
         
@@ -299,7 +300,7 @@ async def get_attendance_by_id(
     try:
         logger.info(f"Getting attendance by ID: {id}")
         
-        attendance = await attendance_crud.get(db, id)
+        attendance = await attendance_repository.get(db, id)
         
         if not attendance:
             logger.warning(f"Attendance not found with ID: {id}")
@@ -363,7 +364,7 @@ async def get_employee_attendance(
         logger.info(f"Getting attendance for employee {employee_id}: skip={skip}, limit={limit}, start_date={start_date}, end_date={end_date}")
         
         # Verify employee exists
-        employee = await employee_crud.get_by_employee_id(db, employee_id)
+        employee = await employee_repository.get_by_employee_id(db, employee_id)
         if not employee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -372,10 +373,10 @@ async def get_employee_attendance(
         
         # Get attendance records
         if start_date and end_date:
-            attendance = await attendance_crud.get_by_date_range(
+            attendance = await attendance_repository.get_by_date_range(
                 db, start_date, end_date, employee_id, skip, limit
             )
-            total = await attendance_crud.count(db, {
+            total = await attendance_repository.count(db, {
                 "employee_id": employee_id.upper(),
                 "date": {
                     "$gte": datetime.combine(start_date, datetime.min.time()),
@@ -383,8 +384,8 @@ async def get_employee_attendance(
                 }
             })
         else:
-            attendance = await attendance_crud.get_by_employee(db, employee_id, skip, limit)
-            total = await attendance_crud.count(db, {"employee_id": employee_id.upper()})
+            attendance = await attendance_repository.get_by_employee(db, employee_id, skip, limit)
+            total = await attendance_repository.count(db, {"employee_id": employee_id.upper()})
         
         total_pages = (total + limit - 1) // limit
         
@@ -435,7 +436,7 @@ async def get_daily_attendance(
     try:
         logger.info(f"Getting daily attendance for {date}: skip={skip}, limit={limit}")
         
-        attendance = await attendance_crud.get_by_date(db, date)
+        attendance = await attendance_repository.get_by_date(db, date)
         
         # Apply pagination manually since get_by_date returns all records
         total = len(attendance)
@@ -489,7 +490,7 @@ async def update_attendance(
     try:
         logger.info(f"Updating attendance record: {id}")
         
-        updated_attendance = await attendance_crud.update(db, id, attendance_data)
+        updated_attendance = await attendance_repository.update(db, id, attendance_data)
         
         if not updated_attendance:
             logger.warning(f"Attendance record not found: {id}")
@@ -541,7 +542,7 @@ async def delete_attendance(
     try:
         logger.info(f"Deleting attendance record: {id}")
         
-        deleted = await attendance_crud.delete(db, id)
+        deleted = await attendance_repository.delete(db, id)
         
         if not deleted:
             logger.warning(f"Attendance record not found for deletion: {id}")
@@ -600,7 +601,7 @@ async def get_employee_attendance_summary(
         logger.info(f"Getting attendance summary for employee {employee_id}: start_date={start_date}, end_date={end_date}")
         
         # Verify employee exists
-        employee = await employee_crud.get_by_employee_id(db, employee_id)
+        employee = await employee_repository.get_by_employee_id(db, employee_id)
         if not employee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -615,7 +616,7 @@ async def get_employee_attendance_summary(
             start_date = date(end_date.year, end_date.month, 1)
         
         # Get attendance summary
-        summary = await attendance_crud.get_employee_attendance_summary(
+        summary = await attendance_repository.get_employee_attendance_summary(
             db, employee_id, start_date, end_date
         )
         
@@ -673,7 +674,7 @@ async def get_daily_attendance_stats(
     try:
         logger.info(f"Getting daily attendance stats for {date}")
         
-        stats = await attendance_crud.get_attendance_stats_by_date(db, date)
+        stats = await attendance_repository.get_attendance_stats_by_date(db, date)
         
         # Create response object
         stats_response = AttendanceStatsResponse(
@@ -731,7 +732,7 @@ async def get_range_attendance_stats(
         logger.info(f"Getting range attendance stats: {start_date} to {end_date}")
         
         # Get attendance for the date range
-        attendance = await attendance_crud.get_by_date_range(db, start_date, end_date)
+        attendance = await attendance_repository.get_by_date_range(db, start_date, end_date)
         
         # Calculate statistics
         total_records = len(attendance)
@@ -770,10 +771,10 @@ async def get_range_attendance_stats(
 @router.get("/employee/{employee_id}/stats", response_model=AttendanceStats)
 async def get_employee_attendance_stats(
     employee_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Get attendance statistics for a specific employee"""
-    stats = await attendance_crud.get_employee_stats(db, employee_id, date_from, date_to)
+    stats = await attendance_repository.get_employee_stats(db, employee_id, date_from, date_to)
     return stats

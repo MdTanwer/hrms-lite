@@ -3,13 +3,12 @@ import logging
 import time
 import uuid
 from datetime import datetime
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config.settings import settings
 from app.config.database import connect_to_mongo, close_mongo_connection, check_database_health
-# from app.api.v1.router import api_router
+from app.api.v1.router import api_router
 from app.middleware.error_handler import add_exception_handlers
 from app.middleware.cors import setup_cors
 
@@ -115,6 +114,9 @@ setup_cors(app)
 
 # Add custom exception handlers
 add_exception_handlers(app)
+
+# Include API routes
+app.include_router(api_router, prefix="/api/v1")
 
 
 

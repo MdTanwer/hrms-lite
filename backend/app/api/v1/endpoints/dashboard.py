@@ -5,8 +5,8 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.api.deps import get_db
 from app.schemas.employee import EmployeeStats
 from app.schemas.attendance import AttendanceStats, DailyAttendanceStats
-from app.crud.employee import employee_crud
-from app.crud.attendance import attendance_crud
+from app.services.employee import employee_repository
+from app.services.attendance import attendance_repository
 
 router = APIRouter()
 
@@ -17,17 +17,17 @@ async def get_dashboard_overview(
 ):
     """Get complete dashboard overview with employee and attendance statistics"""
     # Get employee statistics
-    employee_stats = await employee_crud.get_stats(db)
+    employee_stats = await employee_repository.get_stats(db)
     
     # Get today's attendance statistics
     today = date.today()
     today_start = datetime.combine(today, datetime.min.time())
     today_end = datetime.combine(today, datetime.max.time())
     
-    today_attendance = await attendance_crud.get_daily_stats(db, today_start, today_end)
+    today_attendance = await attendance_repository.get_daily_stats(db, today_start, today_end)
     
     # Get recent activities (last 5 attendance records)
-    recent_activities = await attendance_crud.get_recent_activities(db, limit=5)
+    recent_activities = await attendance_repository.get_recent_activities(db, limit=5)
     
     return {
         "employee_stats": employee_stats,
@@ -48,7 +48,7 @@ async def get_daily_attendance_stats(
     day_start = datetime.combine(target_date, datetime.min.time())
     day_end = datetime.combine(target_date, datetime.max.time())
     
-    stats = await attendance_crud.get_daily_stats(db, day_start, day_end)
+    stats = await attendance_repository.get_daily_stats(db, day_start, day_end)
     return stats
 
 
@@ -67,7 +67,7 @@ async def get_attendance_summary(
     start_datetime = datetime.combine(date_from, datetime.min.time())
     end_datetime = datetime.combine(date_to, datetime.max.time())
     
-    summary = await attendance_crud.get_attendance_summary(db, start_datetime, end_datetime)
+    summary = await attendance_repository.get_attendance_summary(db, start_datetime, end_datetime)
     return summary
 
 
@@ -83,5 +83,5 @@ async def get_department_attendance_stats(
     day_start = datetime.combine(target_date, datetime.min.time())
     day_end = datetime.combine(target_date, datetime.max.time())
     
-    stats = await attendance_crud.get_department_attendance_stats(db, day_start, day_end)
+    stats = await attendance_repository.get_department_attendance_stats(db, day_start, day_end)
     return stats

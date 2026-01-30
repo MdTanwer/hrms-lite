@@ -46,32 +46,7 @@ class EmployeeListResponse(BaseModel):
     page: int = Field(..., ge=1, description="Current page number")
     page_size: int = Field(..., ge=1, le=100, description="Items per page")
     total_pages: int = Field(..., ge=0, description="Total number of pages")
-    data: List[EmployeeResponse] = Field(..., description="List of employees")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "total": 50,
-                "page": 1,
-                "page_size": 10,
-                "total_pages": 5,
-                "data": [
-                    {
-                        "id": "507f1f77bcf86cd799439011",
-                        "employee_id": "EMP001",
-                        "full_name": "John Doe",
-                        "email": "john.doe@company.com",
-                        "department": "Engineering",
-                        "position": "Senior Developer",
-                        "salary": 75000.0,
-                        "start_date": "2022-01-15",
-                        "status": "active",
-                        "created_at": "2022-01-15T10:00:00Z",
-                        "updated_at": "2022-01-15T10:00:00Z"
-                    }
-                ]
-            }
-        }
+    data: List[Dict] = Field(..., description="List of employees")
 
 
 class EmployeeStatsResponse(BaseModel):
@@ -82,36 +57,4 @@ class EmployeeStatsResponse(BaseModel):
     on_leave_employees: int = Field(..., ge=0, description="Number of employees on leave")
     department_breakdown: Dict[str, int] = Field(..., description="Employee count by department")
     average_salary: float = Field(..., ge=0, description="Average salary across all employees")
-    recent_hires: List[EmployeeResponse] = Field(..., description="Last 5 employees hired")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "total_employees": 25,
-                "active_employees": 22,
-                "inactive_employees": 2,
-                "on_leave_employees": 1,
-                "department_breakdown": {
-                    "Engineering": 10,
-                    "HR": 5,
-                    "Sales": 6,
-                    "Marketing": 4
-                },
-                "average_salary": 65000.0,
-                "recent_hires": [
-                    {
-                        "id": "507f1f77bcf86cd799439012",
-                        "employee_id": "EMP025",
-                        "full_name": "Jane Smith",
-                        "email": "jane.smith@company.com",
-                        "department": "Engineering",
-                        "position": "Junior Developer",
-                        "salary": 55000.0,
-                        "start_date": "2024-01-10",
-                        "status": "active",
-                        "created_at": "2024-01-10T09:00:00Z",
-                        "updated_at": "2024-01-10T09:00:00Z"
-                    }
-                ]
-            }
-        }
+    recent_hires: List[Dict] = Field(..., description="Last 5 employees hired")

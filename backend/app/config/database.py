@@ -62,7 +62,7 @@ async def connect_to_mongo():
 async def close_mongo_connection():
     """Close MongoDB connection"""
     try:
-        if mongodb.client:
+        if mongodb.client is not None:
             mongodb.client.close()
             logger.info("Disconnected from MongoDB successfully")
         else:
@@ -73,7 +73,7 @@ async def close_mongo_connection():
 
 async def get_database() -> AsyncIOMotorDatabase:
     """Dependency function to get database instance"""
-    if not mongodb.database:
+    if mongodb.database is None:
         raise ConnectionError("Database not initialized. Call connect_to_mongo() first.")
     return mongodb.database
 
@@ -134,7 +134,7 @@ async def create_indexes():
 async def check_database_health() -> dict:
     """Check MongoDB connection health"""
     try:
-        if not mongodb.client:
+        if mongodb.client is None:
             return {"status": "unhealthy", "message": "No MongoDB client"}
         
         # Ping the database
