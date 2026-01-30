@@ -1,16 +1,5 @@
-import { ReactNode } from 'react';
+import { AlertProps } from '../../types/alert.types';
 import { CheckCircleIcon, AlertIcon, ErrorIcon, InfoIcon } from '../../icons';
-
-type AlertType = 'success' | 'error' | 'warning' | 'info';
-
-interface AlertProps {
-  type: AlertType;
-  title?: string;
-  children: ReactNode;
-  dismissible?: boolean;
-  onDismiss?: () => void;
-  className?: string;
-}
 
 const Alert: React.FC<AlertProps> = ({
   type,
@@ -28,10 +17,10 @@ const Alert: React.FC<AlertProps> = ({
   };
 
   const icons = {
-    success: <CheckCircleIcon className="w-5 h-5" />,
-    error: <ErrorIcon className="w-5 h-5" />,
-    warning: <AlertIcon className="w-5 h-5" />,
-    info: <InfoIcon className="w-5 h-5" />
+    success: <CheckCircleIcon className="w-5 h-5 text-green-500 dark:text-green-400" />,
+    error: <ErrorIcon className="w-5 h-5 text-red-500 dark:text-red-400" />,
+    warning: <AlertIcon className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />,
+    info: <InfoIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
   };
 
   return (
@@ -42,15 +31,15 @@ const Alert: React.FC<AlertProps> = ({
         </div>
         <div className="ml-3 flex-1">
           {title && (
-            <h3 className="text-sm font-medium mb-1">{title}</h3>
+            <h3 className="text-sm font-medium mb-1 dark:text-current">{title}</h3>
           )}
-          <div className="text-sm">{children}</div>
+          <div className="text-sm dark:text-current/90">{children}</div>
         </div>
         {dismissible && onDismiss && (
           <div className="ml-auto pl-3">
             <button
               onClick={onDismiss}
-              className="inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current dark:text-gray-500 dark:hover:text-gray-300 dark:focus:ring-offset-gray-800"
             >
               <span className="sr-only">Dismiss</span>
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

@@ -112,7 +112,8 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
                 "$or": [
                     {"full_name": {"$regex": regex_pattern, "$options": "i"}},
                     {"email": {"$regex": regex_pattern, "$options": "i"}},
-                    {"employee_id": {"$regex": regex_pattern, "$options": "i"}}
+                    {"employee_id": {"$regex": regex_pattern, "$options": "i"}},
+                    {"position": {"$regex": regex_pattern, "$options": "i"}}
                 ]
             }
             
@@ -198,9 +199,7 @@ class EmployeeRepository(BaseRepository[EmployeeInDB]):
                 "active_employees": 0,
                 "inactive_employees": 0,
                 "on_leave_employees": 0,
-                "department_breakdown": department_stats,
-                "average_salary": 0,
-                "recent_hires": []
+                "department_breakdown": department_stats
             }
             
         except Exception as e:

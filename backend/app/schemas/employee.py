@@ -1,5 +1,5 @@
 from typing import List, Dict
-from datetime import datetime, date
+from datetime import datetime
 from pydantic import BaseModel, Field
 from app.models.employee import EmployeeInDB
 
@@ -11,8 +11,6 @@ class EmployeeBase(BaseModel):
     email: str = Field(..., description="Employee email address")
     department: str = Field(..., description="Department name")
     position: str = Field(..., description="Job position")
-    salary: float = Field(..., gt=0, description="Annual salary")
-    start_date: date = Field(..., description="Employment start date")
     status: str = Field(..., description="Employee status")
 
 
@@ -49,5 +47,3 @@ class EmployeeStatsResponse(BaseModel):
     inactive_employees: int = Field(..., ge=0, description="Number of inactive employees")
     on_leave_employees: int = Field(..., ge=0, description="Number of employees on leave")
     department_breakdown: Dict[str, int] = Field(..., description="Employee count by department")
-    average_salary: float = Field(..., ge=0, description="Average salary across all employees")
-    recent_hires: List[Dict] = Field(..., description="Last 5 employees hired")

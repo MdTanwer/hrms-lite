@@ -6,21 +6,38 @@ import Home from "./pages/Dashboard/Home";
 import EmployeeManagement from "./pages/EmployeeManagement/employeemanagement";
 import AttendanceManagement from "./pages/AttendanceManagement/attendancemanagement";
 
+// Import new providers
+import { QueryProvider } from "./providers/QueryProvider";
+import { Toaster } from "react-hot-toast";
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
-            <Route path="/employees" element={<EmployeeManagement />} />
-            <Route path="/attendance" element={<AttendanceManagement />} />
-            {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
-          </Route>
-        </Routes>
-      </Router>
+      {/* Toast notifications - place at the highest level */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+        }}
+        containerStyle={{
+          zIndex: 9999999,
+        }}
+      />
+      
+      <QueryProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            {/* Dashboard Layout */}
+            <Route element={<AppLayout />}>
+              <Route index path="/" element={<Home />} />
+              <Route path="/employees" element={<EmployeeManagement />} />
+              <Route path="/attendance" element={<AttendanceManagement />} />
+              {/* <Route path="/basic-tables" element={<BasicTables />} /> */}
+            </Route>
+          </Routes>
+        </Router>
+      </QueryProvider>
     </ErrorBoundary>
   );
 }

@@ -1,4 +1,3 @@
-from typing import Literal, Optional
 import re
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from bson import ObjectId
@@ -8,7 +7,9 @@ class EmployeeBase(BaseModel):
     employee_id: str = Field(..., description="Unique employee ID (e.g., EMP001)")
     full_name: str = Field(..., min_length=2, max_length=100, description="Employee full name")
     email: EmailStr = Field(..., description="Employee email address")
-    department: Literal["Engineering", "HR", "Sales", "Marketing", "Finance"] = Field(..., description="Employee department")
+    department: str = Field(..., description="Employee department")
+    position: str = Field(..., description="Job position")
+    status: str = Field(..., description="Employee status")
 
     @field_validator('employee_id')
     def validate_employee_id(cls, v):
@@ -33,12 +34,6 @@ class EmployeeBase(BaseModel):
 
 class EmployeeCreate(EmployeeBase):
     pass
-
-
-class EmployeeUpdate(BaseModel):
-    full_name: Optional[str] = Field(None, min_length=2, max_length=100, description="Employee full name")
-    email: Optional[EmailStr] = Field(None, description="Employee email address")
-    department: Optional[Literal["Engineering", "HR", "Sales", "Marketing", "Finance"]] = Field(None, description="Employee department")
 
 
 class EmployeeInDB(EmployeeBase):

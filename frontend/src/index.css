@@ -347,11 +347,13 @@ layer(base);
 }
 
 .taskCheckbox:checked ~ .box span {
-  @apply opacity-100 bg-brand-500;
+  @apply border-[6px] border-brand-500 bg-brand-500 dark:border-brand-500;
 }
+
 .taskCheckbox:checked ~ p {
   @apply text-gray-400 line-through;
 }
+
 .taskCheckbox:checked ~ .box {
   @apply border-brand-500 bg-brand-500 dark:border-brand-500;
 }
@@ -374,6 +376,71 @@ layer(base);
 
 .dark .simplebar-scrollbar::before {
   @apply !bg-gray-700;
+}
+
+/* Toast notifications styling */
+:root {
+  --toast-bg: #ffffff;
+  --toast-color: #374151;
+  --toast-border: #e5e7eb;
+}
+
+.dark {
+  --toast-bg: #1f2937;
+  --toast-color: #f9fafb;
+  --toast-border: #374151;
+}
+
+/* Ensure toast appears above all other elements */
+[data-testid="toast"] {
+  z-index: 9999 !important;
+}
+
+/* Toast container positioning */
+.Toastify__toast-container {
+  z-index: 9999 !important;
+}
+
+/* Dark mode text visibility fixes */
+.dark input::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark select::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark option {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark select option {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* Ensure all form inputs have proper dark mode text */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark textarea,
+.dark select {
+  color: #f9fafb !important;
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark input[type="number"]:focus,
+.dark textarea:focus,
+.dark select:focus {
+  color: #f9fafb !important;
+  background-color: #1f2937 !important;
+  border-color: #3b82f6 !important;
 }
 
 .simplebar-scrollbar.simplebar-visible:before {

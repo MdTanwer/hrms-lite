@@ -263,9 +263,7 @@ async def get_employee_stats(
             active_employees=stats["active_employees"],
             inactive_employees=stats["inactive_employees"],
             on_leave_employees=stats["on_leave_employees"],
-            department_breakdown=stats["department_breakdown"],
-            average_salary=stats["average_salary"],
-            recent_hires=stats["recent_hires"]
+            department_breakdown=stats["department_breakdown"]
         )
         
         return APIResponse(
