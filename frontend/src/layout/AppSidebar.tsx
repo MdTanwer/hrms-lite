@@ -35,11 +35,6 @@ const navItems: NavItem[] = [
     name: "Attendance Management",
     path: "/attendance",
   },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    path: "/basic-tables",
-  },
 ];
 
 const AppSidebar: React.FC = () => {
