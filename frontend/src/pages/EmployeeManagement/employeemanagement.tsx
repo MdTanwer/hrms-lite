@@ -2,8 +2,13 @@ import { useState } from 'react';
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import Button from "../../components/ui/Button";
-import EmployeeSearchFilter from "../../components/EmployeeSearchFilter";
+import EmployeeSearchFilter from "../../components/employee/EmployeeSearchFilter";
+import EmployeeForm from "../../components/employee/EmployeeForm";
 import Modal from "../../components/Modal/Modal";
+import { DataTable } from "../../components/table/DataTable";
+import { EmployeeCell, StatusBadge } from "../../components/employee/EmployeeRow";
+import { useZodForm } from "../../utils/validators";
+import { employeeSchema } from "../../schemas/employeeSchema";
 import { Employee } from '../../types/employee';
 
 const mockEmployees: Employee[] = [
@@ -45,6 +50,27 @@ export default function EmployeeManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
+  const form = useZodForm(employeeSchema, {
+    fullName: '',
+    employeeId: '',
+    email: '',
+    department: '',
+    position: '',
+    salary: 0,
+    startDate: '',
+    status: 'active'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.validateForm()) {
+      // Add employee logic here
+      console.log('Form submitted:', form.values);
+      setIsModalOpen(false);
+      form.resetForm();
+    }
+  };
+
   const filteredEmployees = employees.filter(employee => {
     const matchesSearch = employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -54,18 +80,36 @@ export default function EmployeeManagement() {
 
   const departments = Array.from(new Set(employees.map(emp => emp.department)));
 
-  const getStatusColor = (status: Employee['status']) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'inactive':
-        return 'bg-red-100 text-red-800';
-      case 'on-leave':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const columns = [
+    {
+      key: "employee",
+      header: "Employee",
+      render: (emp: Employee) => <EmployeeCell {...emp} />
+    },
+    {
+      key: "department",
+      header: "Department"
+    },
+    {
+      key: "position",
+      header: "Position"
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (emp: Employee) => <StatusBadge status={emp.status} />
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: () => (
+        <>
+          <button className="text-blue-600 hover:text-blue-800 mr-3 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
+          <button className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+        </>
+      )
     }
-  };
+  ];
 
   return (
     <>
@@ -77,10 +121,10 @@ export default function EmployeeManagement() {
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         
         <div className="col-span-12">
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 p-6">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:shadow-gray-900/10">
+            <div className="border-b border-gray-200 p-6 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="text-xl font-semibold text-gray-800">Employee Directory</h2>
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Employee Directory</h2>
                 <Button onClick={() => setIsModalOpen(true)}>
                   Add Employee
                 </Button>
@@ -95,147 +139,29 @@ export default function EmployeeManagement() {
               />
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Employee
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Department
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Position
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEmployees.map((employee) => (
-                    <tr key={employee.employeeId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-700">
-                                {employee.fullName.split(' ').map(n => n[0]).join('')}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee.fullName}
-                            </div>
-                            <div className="text-sm text-gray-500">{employee.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {employee.department}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {employee.position}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(employee.status)}`}>
-                          {employee.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">
-                          Edit
-                        </button>
-                        <button className="text-red-600 hover:text-red-900">
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={columns}
+              data={filteredEmployees}
+              emptyMessage="No employees found"
+            />
           </div>
         </div>
       </div>
       
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          form.resetForm();
+        }}
         title="Add New Employee"
         size="lg"
       >
-        <form className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Employee ID
-              </label>
-              <input
-                type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Department
-            </label>
-            <select className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option>Engineering</option>
-              <option>HR</option>
-              <option>Sales</option>
-              <option>Marketing</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Position
-            </label>
-            <input
-              type="text"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={() => setIsModalOpen(false)}>
-              Add Employee
-            </Button>
-          </div>
-        </form>
+        <EmployeeForm
+          form={form}
+          handleSubmit={handleSubmit}
+          setIsModalOpen={setIsModalOpen}
+        />
       </Modal>
     </>
   );

@@ -8,6 +8,7 @@ import {
   HorizontaLDots,
   TableIcon,
   GroupIcon,
+  CalenderIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -28,6 +29,11 @@ const navItems: NavItem[] = [
     icon: <GroupIcon />,
     name: "Employee Management",
     path: "/employees",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Attendance Management",
+    path: "/attendance",
   },
   {
     name: "Tables",
