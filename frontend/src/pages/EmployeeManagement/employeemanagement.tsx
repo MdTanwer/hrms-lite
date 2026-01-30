@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import Button from "../../components/ui/Button";
-import EmployeeSearchFilter from "../../components/employee/EmployeeSearchFilter";
+
+import EmployeeSearch from "../../components/employee/EmployeeSearch";
+import DepartmentSelect from "../../components/ui/DepartmentSelect";
 import EmployeeForm from "../../components/employee/EmployeeForm";
 import Modal from "../../components/Modal/Modal";
 import ConfirmModal from "../../components/ui/ConfirmModal";
@@ -183,13 +185,17 @@ export default function EmployeeManagement() {
                 </Button>
               </div>
               
-              <EmployeeSearchFilter
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                selectedDepartment={selectedDepartment}
-                onDepartmentChange={setSelectedDepartment}
-                departments={departments}
-              />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <EmployeeSearch
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                />
+                <DepartmentSelect
+                  selectedDepartment={selectedDepartment}
+                  onDepartmentChange={setSelectedDepartment}
+                  departments={departments}
+                />
+              </div>
             </div>
             
             <DataTable

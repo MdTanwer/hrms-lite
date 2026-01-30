@@ -10,8 +10,8 @@ class EmployeeBase(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=100, description="Employee full name")
     email: str = Field(..., description="Employee email address")
     department: str = Field(..., description="Department name")
-    position: str = Field(..., description="Job position")
-    status: str = Field(..., description="Employee status")
+    position: str = Field(None, description="Job position")
+    status: str = Field("active", description="Employee status")
 
 
 class EmployeeCreate(EmployeeBase):

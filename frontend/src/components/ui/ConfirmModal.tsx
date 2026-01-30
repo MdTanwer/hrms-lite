@@ -1,5 +1,4 @@
 import React from 'react';
-import Modal from '../Modal/Modal';
 import Button from './Button';
 
 interface ConfirmModalProps {
@@ -12,7 +11,6 @@ interface ConfirmModalProps {
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
-  icon?: React.ReactNode;
   customContent?: React.ReactNode;
 }
 
@@ -26,99 +24,102 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancel',
   variant = 'danger',
   isLoading = false,
-  icon,
   customContent
 }) => {
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'danger':
-        return {
-          iconColor: 'text-red-600 dark:text-red-400',
-          buttonClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-500 dark:bg-red-600 dark:hover:bg-red-700',
-          defaultIcon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.932-3L13.932 4c-.77-1.333-2.694-2-3.462-2H6.53c-.77 0-1.692.667-1.932 2L3.068 15c.77 1.333 2.692 2 3.462 2h13.856c.77 0 1.692-.667 1.932-2l1.07-4.586" />
-            </svg>
-          )
-        };
-      case 'warning':
-        return {
-          iconColor: 'text-yellow-600 dark:text-yellow-400',
-          buttonClass: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700',
-          defaultIcon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.932-3L13.932 4c-.77-1.333-2.694-2-3.462-2H6.53c-.77 0-1.692.667-1.932 2L3.068 15c.77 1.333 2.692 2 3.462 2h13.856c.77 0 1.692-.667 1.932-2l1.07-4.586" />
-            </svg>
-          )
-        };
-      case 'info':
-        return {
-          iconColor: 'text-blue-600 dark:text-blue-400',
-          buttonClass: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700',
-          defaultIcon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )
-        };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
     }
   };
 
-  const styles = getVariantStyles();
-
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={title}
-      size="sm"
+    <div 
+      className={`fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-[999999] p-4 transition-all duration-300 ${
+        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      }`}
+      onClick={handleBackdropClick}
     >
-      <div className="space-y-4">
-        {/* Icon and message section */}
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <div className={styles.iconColor}>
-              {icon || styles.defaultIcon}
-            </div>
+      <div 
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ${
+          isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            {variant === 'danger' && (
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            )}
+            {variant === 'warning' && (
+              <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            )}
+            {variant === 'info' && (
+              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 break-words">
-              {title}
-            </h3>
-            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400 break-words">
-              {message}
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+          >
+            <svg 
+              className="w-6 h-6" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M6 18L18 6M6 6l12 12" 
+              />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="p-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{message}</p>
+          
+          {customContent && (
+            <div className="mb-4">
+              {customContent}
             </div>
+          )}
+          
+          <div className="flex gap-3">
+            <Button
+              onClick={onClose}
+              disabled={isLoading}
+              variant="outline"
+              fullWidth
+            >
+              {cancelText}
+            </Button>
+            <Button
+              onClick={onConfirm}
+              disabled={isLoading}
+              variant={variant === 'danger' ? 'destructive' : variant === 'warning' ? 'secondary' : 'primary'}
+              fullWidth
+            >
+              {isLoading ? 'Loading...' : confirmText}
+            </Button>
           </div>
         </div>
-
-        {/* Custom content section */}
-        {customContent && (
-          <div className="mt-4">
-            {customContent}
-          </div>
-        )}
       </div>
-      
-      {/* Action buttons */}
-      <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={isLoading}
-          className="flex-1 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
-          {cancelText}
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={onConfirm}
-          disabled={isLoading}
-          className="flex-1"
-        >
-          {isLoading ? 'Loading...' : confirmText}
-        </Button>
-      </div>
-    </Modal>
+    </div>
   );
 };
 

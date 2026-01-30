@@ -8,8 +8,8 @@ class EmployeeBase(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100, description="Employee full name")
     email: EmailStr = Field(..., description="Employee email address")
     department: str = Field(..., description="Employee department")
-    position: str = Field(..., description="Job position")
-    status: str = Field(..., description="Employee status")
+    position: str = Field(None, description="Job position")
+    status: str = Field("active", description="Employee status")
 
     @field_validator('employee_id')
     def validate_employee_id(cls, v):

@@ -28,12 +28,12 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
     {
       key: "department",
       header: "Department",
-      render: (row: any) => row.employee.department
+      render: (row: any) => row.employee?.department || 'N/A'
     },
     {
       key: "position",
       header: "Position",
-      render: (row: any) => row.employee.position
+      render: (row: any) => row.employee?.position || 'N/A'
     },
     {
       key: "status",

@@ -44,8 +44,8 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
           {...register('employeeId')}
           error={errors.employeeId?.message}
           options={employees.map(emp => ({
-            value: emp.employeeId,
-            label: `${emp.fullName} (${emp.employeeId})`
+            value: emp.employee_id,
+            label: `${emp.full_name} (${emp.employee_id})`
           }))}
         />
         
