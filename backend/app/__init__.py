@@ -1,0 +1,3 @@
+"""
+HRMS Lite Backend Application
+"""

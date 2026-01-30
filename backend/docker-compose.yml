@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: hrms_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: hrms_lite
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - hrms_network
+
+  # FastAPI Backend
+  backend:
+    build: .
+    container_name: hrms_backend
+    restart: unless-stopped
+    environment:
+      MONGODB_URL: mongodb://admin:password@mongodb:27017
+      MONGODB_DB_NAME: hrms_lite
+      DEBUG: "true"
+      SECRET_KEY: your-secret-key-here-change-in-production
+      ALLOWED_ORIGINS: '["http://localhost:3000", "http://localhost:5173"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app/app
+    networks:
+      - hrms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (for development)
+  frontend:
+    image: node:18-alpine
+    container_name: hrms_frontend
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    networks:
+      - hrms_network
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  hrms_network:
+    driver: bridge
