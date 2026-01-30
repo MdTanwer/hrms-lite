@@ -1,1 +1,0 @@
-// Employee Card Component
