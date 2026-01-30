@@ -62,9 +62,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
           error={errors.status?.message}
           options={[
             { value: 'present', label: 'Present' },
-            { value: 'absent', label: 'Absent' },
-            { value: 'late', label: 'Late' },
-            { value: 'half-day', label: 'Half Day' }
+            { value: 'absent', label: 'Absent' }
           ]}
         />
         

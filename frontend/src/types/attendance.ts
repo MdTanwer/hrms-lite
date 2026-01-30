@@ -1,10 +1,10 @@
 export interface Attendance {
   id: string;
   employeeId: string;
-  date: string; // YYYY-MM-DD format
-  status: 'present' | 'absent' | 'late' | 'half-day';
-  markedBy: string; // admin who marked
-  markedAt: string; // timestamp
+  date: string; 
+  status: 'present' | 'absent';
+  markedBy: string; 
+  markedAt: string; 
   notes?: string;
 }
 

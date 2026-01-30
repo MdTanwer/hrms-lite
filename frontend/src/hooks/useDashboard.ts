@@ -60,10 +60,10 @@ const mockAttendances: Attendance[] = [
   { id: '1', employeeId: 'EMP001', date: '2024-01-15', status: 'present', markedBy: 'Admin', markedAt: '2024-01-15T09:00:00Z' },
   { id: '2', employeeId: 'EMP002', date: '2024-01-15', status: 'present', markedBy: 'Admin', markedAt: '2024-01-15T09:05:00Z' },
   { id: '3', employeeId: 'EMP003', date: '2024-01-15', status: 'absent', markedBy: 'Admin', markedAt: '2024-01-15T10:00:00Z' },
-  { id: '4', employeeId: 'EMP004', date: '2024-01-15', status: 'late', markedBy: 'Admin', markedAt: '2024-01-15T09:30:00Z' },
+  { id: '4', employeeId: 'EMP004', date: '2024-01-15', status: 'present', markedBy: 'Admin', markedAt: '2024-01-15T09:00:00Z' },
   { id: '5', employeeId: 'EMP005', date: '2024-01-15', status: 'present', markedBy: 'Admin', markedAt: '2024-01-15T09:02:00Z' },
   { id: '6', employeeId: 'EMP001', date: '2024-01-14', status: 'present', markedBy: 'Admin', markedAt: '2024-01-14T09:00:00Z' },
-  { id: '7', employeeId: 'EMP002', date: '2024-01-14', status: 'late', markedBy: 'Admin', markedAt: '2024-01-14T09:15:00Z' },
+  { id: '7', employeeId: 'EMP002', date: '2024-01-14', status: 'present', markedBy: 'Admin', markedAt: '2024-01-14T09:00:00Z' },
   { id: '8', employeeId: 'EMP003', date: '2024-01-14', status: 'present', markedBy: 'Admin', markedAt: '2024-01-14T09:00:00Z' },
   { id: '9', employeeId: 'EMP004', date: '2024-01-14', status: 'present', markedBy: 'Admin', markedAt: '2024-01-14T08:55:00Z' },
   { id: '10', employeeId: 'EMP005', date: '2024-01-14', status: 'present', markedBy: 'Admin', markedAt: '2024-01-14T09:01:00Z' }
@@ -92,7 +92,6 @@ export const useDashboard = () => {
     const todayAttendances = attendances.filter(att => att.date === '2024-01-15');
     const presentToday = todayAttendances.filter(att => att.status === 'present').length;
     const absentToday = todayAttendances.filter(att => att.status === 'absent').length;
-    const lateToday = todayAttendances.filter(att => att.status === 'late').length;
     
     const attendanceRate = todayAttendances.length > 0 
       ? Math.round((presentToday / todayAttendances.length) * 100) 
@@ -123,7 +122,6 @@ export const useDashboard = () => {
       totalDepartments,
       presentToday,
       absentToday,
-      lateToday,
       attendanceRate,
       departmentStats,
       recentActivities

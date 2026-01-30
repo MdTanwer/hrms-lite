@@ -49,9 +49,9 @@ const mockAttendances: (Attendance & { employee: Employee })[] = [
     id: '2',
     employeeId: 'EMP002',
     date: '2024-01-15',
-    status: 'late',
+    status: 'present',
     markedBy: 'Admin',
-    markedAt: '2024-01-15T09:30:00Z',
+    markedAt: '2024-01-15T09:05:00Z',
     employee: mockEmployees[1]
   },
   {
@@ -62,6 +62,24 @@ const mockAttendances: (Attendance & { employee: Employee })[] = [
     markedBy: 'Admin',
     markedAt: '2024-01-15T10:00:00Z',
     employee: mockEmployees[2]
+  },
+  {
+    id: '4',
+    employeeId: 'EMP004',
+    date: '2024-01-15',
+    status: 'present',
+    markedBy: 'Admin',
+    markedAt: '2024-01-15T09:00:00Z',
+    employee: mockEmployees[3]
+  },
+  {
+    id: '5',
+    employeeId: 'EMP005',
+    date: '2024-01-15',
+    status: 'present',
+    markedBy: 'Admin',
+    markedAt: '2024-01-15T09:02:00Z',
+    employee: mockEmployees[4]
   }
 ];
 
@@ -117,9 +135,7 @@ export const useAttendance = () => {
     const stats = {
       total: attendances.length,
       present: 0,
-      absent: 0,
-      late: 0,
-      halfDay: 0
+      absent: 0
     };
 
     attendances.forEach(att => {
@@ -129,12 +145,6 @@ export const useAttendance = () => {
           break;
         case 'absent':
           stats.absent++;
-          break;
-        case 'late':
-          stats.late++;
-          break;
-        case 'half-day':
-          stats.halfDay++;
           break;
       }
     });

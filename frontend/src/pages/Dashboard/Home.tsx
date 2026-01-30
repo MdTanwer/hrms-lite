@@ -49,7 +49,6 @@ export default function Home() {
             totalDepartments={stats.totalDepartments}
             presentToday={stats.presentToday}
             absentToday={stats.absentToday}
-            lateToday={stats.lateToday}
             attendanceRate={stats.attendanceRate}
             loading={loading}
           />

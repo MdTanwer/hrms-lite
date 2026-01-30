@@ -6,7 +6,6 @@ interface DashboardStatsProps {
   totalDepartments: number;
   presentToday: number;
   absentToday: number;
-  lateToday: number;
   attendanceRate: number;
   loading?: boolean;
 }
@@ -17,12 +16,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
   totalDepartments,
   presentToday,
   absentToday,
-  lateToday,
   attendanceRate,
   loading = false
 }) => {
   if (loading) {
-    return <CardSkeleton cards={6} />;
+    return <CardSkeleton cards={5} />;
   }
 
   const statCards = [
@@ -60,18 +58,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
       icon: '❌',
       color: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300',
       trend: 'Need follow-up'
-    },
-    {
-      title: 'Late Today',
-      value: lateToday,
-      icon: '⏰',
-      color: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
-      trend: 'Monitor punctuality'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {statCards.map((stat, index) => (
         <div
           key={index}
