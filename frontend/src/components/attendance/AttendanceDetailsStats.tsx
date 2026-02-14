@@ -8,7 +8,7 @@ export interface AttendanceDetailsStatsProps {
   attendanceRate?: number;
 }
 
-const baseCardClass = 'rounded-lg border p-2 min-w-0';
+const baseCardClass = 'rounded-lg border p-2 min-w-0 flex flex-col items-center justify-center text-center';
 
 function getAttendanceRateColor(rate: number): string {
   if (rate >= 80) return 'text-emerald-600 dark:text-emerald-400';

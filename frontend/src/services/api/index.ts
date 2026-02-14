@@ -13,10 +13,7 @@ export type {
 // Export attendance types (used by hooks/pages)
 export type {
   AttendanceCreateDTO,
-  AttendanceUpdateDTO,
   AttendanceFilterParams,
-  AttendanceSummary,
-  AttendanceStats,
 } from '@/types/attendance';
 
 // Re-export axios client for custom requests

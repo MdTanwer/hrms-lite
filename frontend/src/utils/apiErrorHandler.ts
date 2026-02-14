@@ -33,7 +33,7 @@ export const getApiErrorMessage = (error: unknown): string => {
         }
         return errorMessage;
       case 500:
-        return 'Server error. Please try again later.';
+        return errorMessage || 'Server error. Please try again later.';
       default:
         return errorMessage;
     }

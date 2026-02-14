@@ -72,7 +72,7 @@ async def get_employees(
         employees = await employee_repository.get_multi(
             db, skip=skip, limit=limit,
             filter_query=filter_query,
-            sort_query=[("full_name", 1)]
+            sort_query=[("created_at", -1)]  # latest first
         )
         total = await employee_repository.count(db, filter_query)
         total_pages = (total + limit - 1) // limit if limit else 0
@@ -181,26 +181,16 @@ async def get_employee_by_id(
 @router.delete("/{employee_id}", response_model=SuccessResponse)
 async def delete_employee(
     employee_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database_dependency)
+    db: AsyncIOMotorDatabase = Depends(get_database_dependency),
 ):
+    """Soft delete: sets deleted_at so the employee is hidden from lists and lookups."""
     try:
-        current_employee = await employee_repository.get_by_employee_id(db, employee_id)
-        if not current_employee:
+        updated = await employee_repository.soft_delete(db, employee_id)
+        if not updated:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Employee {employee_id} not found"
+                detail=f"Employee {employee_id} not found",
             )
-        
-        attendance_count = await db["attendance"].count_documents({"employee_id": employee_id.upper()})
-        if attendance_count > 0:
-            # Employee has attendance records, cannot be deleted
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Employee {employee_id} has attendance records and cannot be deleted"
-            )
-        
-        await employee_repository.delete(db, str(current_employee.id))
-        
         return SuccessResponse(message=f"Employee {employee_id} deleted successfully")
     except HTTPException:
         raise
@@ -208,5 +198,5 @@ async def delete_employee(
         logger.error(f"Error deleting employee {employee_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete employee"
+            detail="Failed to delete employee",
         )

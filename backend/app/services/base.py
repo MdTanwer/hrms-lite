@@ -1,6 +1,6 @@
 import logging
 from typing import Generic, TypeVar, Type, Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError, PyMongoError
 from bson import ObjectId, errors as bson_errors
@@ -48,8 +48,8 @@ class BaseRepository(Generic[ModelType]):
 
     async def create(self, db: Any, obj_in: ModelType) -> ModelType:
         try:
-            obj_data = obj_in.dict()
-            current_time = datetime.utcnow()
+            obj_data = obj_in.model_dump()
+            current_time = datetime.now(timezone.utc)
             obj_data["created_at"] = current_time
             obj_data["updated_at"] = current_time
             
@@ -74,12 +74,12 @@ class BaseRepository(Generic[ModelType]):
             raise ValueError(f"Invalid ID format: {id}") from e
         
         try:
-            update_data = obj_in.dict(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True, exclude={"id", "_id"})
             
             if not update_data:
                 return await self.get(db, id)
             
-            update_data["updated_at"] = datetime.utcnow()
+            update_data["updated_at"] = datetime.now(timezone.utc)
             
             result = await db[self.collection_name].update_one(
                 {"_id": object_id}, {"$set": update_data}

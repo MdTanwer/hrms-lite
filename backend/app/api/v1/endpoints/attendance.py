@@ -2,6 +2,7 @@ from typing import Optional
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 from app.api.deps import get_database_dependency
 from app.services.attendance import attendance_repository
 from app.models.attendance import AttendanceCreate, AttendanceInDB
@@ -11,6 +12,7 @@ from app.schemas.attendance import (
     EmployeeAttendanceStatsResponse,
 )
 from app.schemas.common import APIResponse
+from pydantic import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,11 +44,21 @@ async def mark_attendance(
         
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Attendance already exists for this employee on this date.",
+        )
     except HTTPException:
         raise
+    except ValidationError as e:
+        logger.warning(f"Validation error marking attendance: {e}")
+        msg = e.errors()[0].get("msg", str(e)) if e.errors() else str(e)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
     except Exception as e:
-        logger.error(f"Error marking attendance: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to mark attendance")
+        logger.exception("Error marking attendance")
+        detail = str(e) if str(e).strip() else "Failed to mark attendance"
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 
 
 @router.get(
