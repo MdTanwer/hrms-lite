@@ -140,7 +140,7 @@ async def create_indexes():
         )
         
         # Attendance collection indexes - only essential ones
-        # Unique constraint for employee_id + date combination
+        # Enforce no duplicate attendance per employee + date (assignment requirement)
         await mongodb.database.attendance.create_index(
             [("employee_id", 1), ("date", 1)],
             unique=True,
