@@ -1,3 +1,0 @@
-"""HRMS Lite backend application package."""
-
-__all__ = []
