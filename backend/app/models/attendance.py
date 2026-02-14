@@ -7,9 +7,17 @@ from bson import ObjectId
 
 
 class AttendanceBase(BaseModel):
-    """Fields shared by create and DB document."""
+    """Fields shared by create and DB document. employee_id stored as ObjectId in DB, serialized as str in API."""
 
     employee_id: str
+
+    @field_validator("employee_id", mode="before")
+    @classmethod
+    def employee_id_objectid_to_str(cls, v):
+        """Accept ObjectId from DB and serialize to str for API."""
+        if isinstance(v, ObjectId):
+            return str(v)
+        return v
     date: date
     status: Literal["present", "absent", "half-day", "leave"] = "present"
     notes: Optional[str] = None
@@ -21,13 +29,6 @@ class AttendanceCreate(AttendanceBase):
     """Request body for marking attendance. marked_at is server-set."""
 
     pass
-
-
-class AttendanceUpdate(BaseModel):
-    """Request body for updating attendance (status and/or notes)."""
-
-    status: Optional[Literal["present", "absent", "half-day", "leave"]] = None
-    notes: Optional[str] = None
 
 
 class AttendanceInDB(AttendanceBase):
@@ -52,14 +53,3 @@ class AttendanceResponse(AttendanceInDB):
     employee_name: Optional[str] = None
     employee_department: Optional[str] = None
     employee_position: Optional[str] = None
-
-
-class AttendanceStats(BaseModel):
-    """Aggregate stats for an employee over a date range."""
-
-    total_days: int
-    present_days: int
-    absent_days: int
-    half_days: int
-    leave_days: int
-    attendance_rate: float

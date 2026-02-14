@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/services/axios';
 import {
   Attendance,
+  AttendanceApiResponse,
   AttendanceCreateDTO,
-  AttendanceUpdateDTO,
   AttendanceFilterParams,
-  AttendanceSummary,
+  EmployeeAttendanceStats,
+  EmployeeAttendanceStatsApiResponse,
 } from '@/types/attendance';
 import { PaginatedResponse } from '@/types/employee';
-import { handleApiError, handleApiSuccess } from '@/utils/apiErrorHandler';
+import { getApiErrorMessage, handleApiError, handleApiSuccess } from '@/utils/apiErrorHandler';
 
 const ATTENDANCE_ENDPOINT = '/api/v1/attendance';
 
@@ -17,42 +18,26 @@ export const attendanceKeys = {
   all: ['attendance'] as const,
   lists: () => [...attendanceKeys.all, 'list'] as const,
   list: (filters: AttendanceFilterParams) => [...attendanceKeys.lists(), filters] as const,
-  details: () => [...attendanceKeys.all, 'detail'] as const,
-  detail: (id: string) => [...attendanceKeys.details(), id] as const,
   employee: (employeeId: string) => [...attendanceKeys.all, 'employee', employeeId] as const,
-  summary: (employeeId: string, startDate?: string, endDate?: string) =>
-    [...attendanceKeys.all, 'summary', employeeId, startDate, endDate] as const,
-  stats: (date: string) => [...attendanceKeys.all, 'stats', date] as const,
+  employeeStats: (employeeId: string, startDate: string, endDate: string) =>
+    [...attendanceKeys.all, 'employeeStats', employeeId, startDate, endDate] as const,
 };
 
 /**
- * Hook to fetch attendance records with filtering
- */
-export const useAttendance = (params?: AttendanceFilterParams) => {
-  return useQuery({
-    queryKey: attendanceKeys.list(params || {}),
-    queryFn: async () => {
-      const res = await apiClient.get<PaginatedResponse<Attendance>>(ATTENDANCE_ENDPOINT, { params });
-      return res.data;
-    },
-  });
-};
-
-/**
- * Hook to fetch attendance for specific employee
+ * Hook to fetch attendance (GET /attendance) with filters matching backend:
+ * skip, limit, employee_id, start_date, end_date, status
  */
 export const useEmployeeAttendance = (
   employeeId: string,
-  params?: { start_date?: string; end_date?: string },
+  params?: { start_date?: string; end_date?: string; skip?: number; limit?: number; status?: string },
   enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: [...attendanceKeys.employee(employeeId), params],
     queryFn: async () => {
-      const res = await apiClient.get<PaginatedResponse<Attendance>>(
-        `${ATTENDANCE_ENDPOINT}/employee/${employeeId}`,
-        { params }
-      );
+      const res = await apiClient.get<PaginatedResponse<Attendance>>(ATTENDANCE_ENDPOINT, {
+        params: { employee_id: employeeId, ...params },
+      });
       return res.data;
     },
     enabled: enabled && !!employeeId,
@@ -60,134 +45,55 @@ export const useEmployeeAttendance = (
 };
 
 /**
- * Hook to fetch attendance summary for employee
+ * Hook to fetch employee attendance stats for date range (GET /attendance/employee/{id}/stats).
+ * Optimized: single aggregation on backend, no list fetch needed for stats.
  */
-export const useEmployeeAttendanceSummary = (
+export const useEmployeeAttendanceStats = (
   employeeId: string,
-  startDate?: string,
-  endDate?: string,
+  startDate: string,
+  endDate: string,
   enabled: boolean = true
 ) => {
   return useQuery({
-    queryKey: attendanceKeys.summary(employeeId, startDate, endDate),
-    queryFn: async () => {
-      const res = await apiClient.get<AttendanceSummary>(
-        `${ATTENDANCE_ENDPOINT}/employee/${employeeId}/summary`,
+    queryKey: attendanceKeys.employeeStats(employeeId, startDate, endDate),
+    queryFn: async (): Promise<EmployeeAttendanceStats> => {
+      const res = await apiClient.get<EmployeeAttendanceStatsApiResponse>(
+        `${ATTENDANCE_ENDPOINT}/employee/${encodeURIComponent(employeeId)}/stats`,
         { params: { start_date: startDate, end_date: endDate } }
       );
-      return res.data;
+      if (res.data?.data != null) return res.data.data;
+      return res.data as unknown as EmployeeAttendanceStats;
     },
-    enabled: enabled && !!employeeId,
+    enabled: enabled && !!employeeId && !!startDate && !!endDate,
   });
 };
 
 /**
- * Hook to fetch attendance for specific date
- */
-export const useAttendanceByDate = (date: string, enabled: boolean = true) => {
-  return useQuery({
-    queryKey: [...attendanceKeys.all, 'date', date],
-    queryFn: async () => {
-      const res = await apiClient.get<PaginatedResponse<Attendance>>(
-        `${ATTENDANCE_ENDPOINT}/date/${date}`
-      );
-      return res.data;
-    },
-    enabled: enabled && !!date,
-  });
-};
-
-/**
- * Hook to mark attendance
+ * Hook to mark attendance (POST /api/v1/attendance).
+ * Backend returns APIResponse<AttendanceInDB>; we unwrap and invalidate lists.
  */
 export const useMarkAttendance = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: AttendanceCreateDTO) => {
-      const res = await apiClient.post<Attendance>(ATTENDANCE_ENDPOINT, data);
-      return res.data;
+    mutationFn: async (data: AttendanceCreateDTO): Promise<Attendance> => {
+      const res = await apiClient.post<AttendanceApiResponse>(ATTENDANCE_ENDPOINT, data);
+      const body = res.data;
+      if (body?.data != null) return body.data;
+      return body as unknown as Attendance;
     },
     onSuccess: (newAttendance: Attendance) => {
-      const employeeId = (newAttendance as Attendance & { employee_id?: string }).employee_id ?? newAttendance.employeeId;
+      const employeeId = newAttendance.employee_id ?? newAttendance.employeeId ?? '';
       queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: attendanceKeys.employee(employeeId) });
-      queryClient.invalidateQueries({ queryKey: [...attendanceKeys.all, 'date', newAttendance.date] });
-      queryClient.invalidateQueries({ queryKey: [...attendanceKeys.all, 'summary', employeeId] });
+      queryClient.invalidateQueries({ queryKey: [...attendanceKeys.all, 'employeeStats', employeeId] });
       handleApiSuccess('Attendance marked successfully!');
     },
     onError: (error) => {
+      const message = getApiErrorMessage(error);
+      if (message === 'Attendance date cannot be in the future') return;
       handleApiError(error);
     },
   });
 };
 
-/**
- * Hook to bulk mark attendance
- */
-export const useBulkMarkAttendance = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: AttendanceCreateDTO[]) => {
-      const res = await apiClient.post<Attendance[]>(`${ATTENDANCE_ENDPOINT}/bulk`, data);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
-      handleApiSuccess('Bulk attendance marked successfully!');
-    },
-    onError: (error) => {
-      handleApiError(error);
-    },
-  });
-};
-
-/**
- * Hook to update attendance
- */
-export const useUpdateAttendance = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: AttendanceUpdateDTO }) => {
-      const res = await apiClient.patch<Attendance>(`${ATTENDANCE_ENDPOINT}/${id}`, data);
-      return res.data;
-    },
-    onSuccess: (updatedAttendance: Attendance) => {
-      queryClient.setQueryData(
-        attendanceKeys.detail(updatedAttendance.id),
-        updatedAttendance
-      );
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
-      handleApiSuccess('Attendance updated successfully!');
-    },
-    onError: (error) => {
-      handleApiError(error);
-    },
-  });
-};
-
-/**
- * Hook to delete attendance
- */
-export const useDeleteAttendance = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiClient.delete<{ success: boolean; message: string }>(
-        `${ATTENDANCE_ENDPOINT}/${id}`
-      );
-      return res.data;
-    },
-    onSuccess: (_, id) => {
-      queryClient.removeQueries({ queryKey: attendanceKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
-      handleApiSuccess('Attendance deleted successfully!');
-    },
-    onError: (error) => {
-      handleApiError(error);
-    },
-  });
-};

@@ -1,39 +1,46 @@
 """API response schemas for attendance. Domain models live in app.models.attendance."""
 
-from typing import List, Dict, Any
+from typing import List
 from pydantic import BaseModel
 
-from app.models.attendance import AttendanceResponse
+
+class AttendanceListItem(BaseModel):
+    """Single attendance row for list API; frontend displays as-is (id, date, status)."""
+
+    id: str
+    date: str  # ISO date string for display
+    status: str
+
+    @classmethod
+    def from_attendance(cls, att: object) -> "AttendanceListItem":
+        """Build display-ready item from attendance model (id, date as ISO string, status)."""
+        d = getattr(att, "date", None)
+        date_str = d.isoformat() if hasattr(d, "isoformat") else str(d) if d else ""
+        return cls(
+            id=getattr(att, "id", ""),
+            date=date_str,
+            status=getattr(att, "status", "present") or "present",
+        )
 
 
 class AttendanceListResponse(BaseModel):
-    """Paginated list of attendance records."""
+    """Paginated list of attendance records. data is display-ready for the table."""
 
     total: int
     page: int
     page_size: int
     total_pages: int
-    data: List[AttendanceResponse]
+    data: List[AttendanceListItem]
 
 
-class AttendanceStatsResponse(BaseModel):
-    """Attendance statistics over a date range."""
+class EmployeeAttendanceStatsResponse(BaseModel):
+    """Aggregated attendance stats for one employee over a date range."""
 
-    total_records: int
-    present_count: int
-    absent_count: int
-    half_day_count: int
-    leave_count: int
-    attendance_rate: float
-    date_range: Dict[str, Any]
-
-
-class EmployeeAttendanceReport(BaseModel):
-    """Per-employee attendance summary for reports."""
-
-    employee_id: str
-    employee_name: str
     total_days: int
     present_days: int
     absent_days: int
-    attendance_percentage: float
+    half_days: int
+    leave_days: int
+    attendance_rate: float
+
+
