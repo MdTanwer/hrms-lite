@@ -128,7 +128,6 @@ hrms-lite/
 | Employees  | GET    | `/api/v1/employees` | List (paginated, filter by department/search) |
 | Employees  | POST   | `/api/v1/employees` | Create employee |
 | Employees  | GET    | `/api/v1/employees/{employee_id}` | Get by employee ID |
-| Employees  | GET    | `/api/v1/employees/id/{id}` | Get by MongoDB ObjectId |
 | Employees  | DELETE | `/api/v1/employees/{employee_id}` | Soft delete |
 | Attendance | POST   | `/api/v1/attendance` | Mark attendance |
 | Attendance | GET    | `/api/v1/attendance` | List (filters: employee_id, start_date, end_date, status) |

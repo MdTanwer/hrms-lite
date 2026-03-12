@@ -123,36 +123,6 @@ async def get_employees_by_department(
         )
 
 
-@router.get("/id/{id}", response_model=APIResponse[EmployeeInDB])
-async def get_employee_by_object_id(
-    id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database_dependency)
-):
-    try:
-        employee = await employee_repository.get(db, id)
-        
-        if not employee:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Employee not found"
-            )
-        
-        return APIResponse(data=employee)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid employee ID format"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting employee by ObjectId {id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve employee"
-        )
-
-
 @router.get("/{employee_id}", response_model=APIResponse[EmployeeInDB])
 async def get_employee_by_id(
     employee_id: str,
