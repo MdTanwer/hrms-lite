@@ -1,40 +1,14 @@
-from typing import Optional, List, Dict, Any
-from datetime import datetime, date
+"""API response schemas for attendance. Domain models live in app.models.attendance."""
+
+from typing import List, Dict, Any
 from pydantic import BaseModel
 
-
-class AttendanceBase(BaseModel):
-    """Base attendance schema"""
-    employee_id: str
-    date: date
-    status: str
-    notes: Optional[str] = None
-    marked_by: str
-
-
-class AttendanceCreate(AttendanceBase):
-    """Schema for creating attendance records"""
-    pass
-
-
-class AttendanceUpdate(BaseModel):
-    """Schema for updating attendance records"""
-    status: Optional[str] = None
-    notes: Optional[str] = None
-
-
-class AttendanceResponse(AttendanceBase):
-    """Schema for attendance responses"""
-    id: str
-    created_at: datetime
-    updated_at: datetime
-    marked_at: datetime
-    employee_name: Optional[str] = None
-    employee_department: Optional[str] = None
+from app.models.attendance import AttendanceResponse
 
 
 class AttendanceListResponse(BaseModel):
-    """Schema for paginated attendance list responses"""
+    """Paginated list of attendance records."""
+
     total: int
     page: int
     page_size: int
@@ -43,7 +17,8 @@ class AttendanceListResponse(BaseModel):
 
 
 class AttendanceStatsResponse(BaseModel):
-    """Schema for attendance statistics response"""
+    """Attendance statistics over a date range."""
+
     total_records: int
     present_count: int
     absent_count: int
@@ -53,18 +28,9 @@ class AttendanceStatsResponse(BaseModel):
     date_range: Dict[str, Any]
 
 
-class DailyAttendanceStats(BaseModel):
-    """Schema for daily attendance statistics"""
-    total_employees: int
-    present: int
-    absent: int
-    half_day: int
-    leave: int
-    attendance_rate: float
-
-
 class EmployeeAttendanceReport(BaseModel):
-    """Schema for individual employee attendance report"""
+    """Per-employee attendance summary for reports."""
+
     employee_id: str
     employee_name: str
     total_days: int
