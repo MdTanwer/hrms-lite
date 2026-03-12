@@ -1,13 +1,23 @@
-import { PaginatedResponse } from '@/types/employee';
-
+/** Backend returns snake_case; we accept both for compatibility */
 export interface Attendance {
   id: string;
-  employeeId: string;
+  employee_id?: string;
+  employeeId?: string;
   date: string;
-  status: 'present' | 'absent';
-  markedBy: string;
-  markedAt: string;
+  status: 'present' | 'absent' | 'half-day' | 'leave';
+  marked_by?: string;
+  markedBy?: string;
+  marked_at?: string;
+  markedAt?: string;
   notes?: string;
+}
+
+/** Wrapper for POST /attendance response */
+export interface AttendanceApiResponse {
+  success: boolean;
+  message: string;
+  data: Attendance;
+  timestamp?: string;
 }
 
 export interface AttendanceRecord {
@@ -19,24 +29,13 @@ export interface AttendanceRecord {
   halfDays: number;
 }
 
-export interface AttendanceFormData {
-  employeeId: string;
-  date: string;
-  status: 'present' | 'absent' | 'late' | 'half-day';
-  notes?: string;
-}
-
+/** Request body for POST /attendance (mark attendance) */
 export interface AttendanceCreateDTO {
   employee_id: string;
   date: string;
   status: 'present' | 'absent' | 'half-day' | 'leave';
   notes?: string;
   marked_by?: string;
-}
-
-export interface AttendanceUpdateDTO {
-  status?: 'present' | 'absent' | 'half-day' | 'leave';
-  notes?: string;
 }
 
 export interface AttendanceFilterParams {
@@ -49,26 +48,19 @@ export interface AttendanceFilterParams {
   department?: string;
 }
 
-export interface AttendanceSummary {
-  employee_id: string;
-  employee_name?: string;
+/** GET /attendance/employee/{employee_id}/stats?start_date=&end_date= */
+export interface EmployeeAttendanceStats {
   total_days: number;
   present_days: number;
   absent_days: number;
-  half_day_days: number;
+  half_days: number;
   leave_days: number;
-  attendance_percentage: number;
+  attendance_rate: number;
 }
 
-export interface AttendanceStats {
-  total_records: number;
-  present_count: number;
-  absent_count: number;
-  half_day_count: number;
-  leave_count: number;
-  attendance_rate: number;
-  date_range?: {
-    start: string;
-    end: string;
-  };
+export interface EmployeeAttendanceStatsApiResponse {
+  success: boolean;
+  message: string;
+  data: EmployeeAttendanceStats;
+  timestamp?: string;
 }
