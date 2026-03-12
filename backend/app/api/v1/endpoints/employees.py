@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 
 from app.api.deps import get_database_dependency
 from app.models.employee import EmployeeCreate, EmployeeInDB
@@ -46,11 +47,28 @@ async def create_employee(
         
     except HTTPException:
         raise
+    except DuplicateKeyError as e:
+        logger.warning(f"Duplicate key on create: {e}")
+        # Race condition: duplicate employee_id or email
+        detail = "Employee with this ID or email already exists."
+        if "employee_id" in str(e):
+            detail = f"Employee with ID {employee_data.employee_id} already exists."
+        elif "email" in str(e):
+            detail = f"Employee with email {employee_data.email} already exists."
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Error creating employee: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create employee"
+            detail=str(e) if str(e).strip() else "Failed to create employee",
         )
 
 
