@@ -13,6 +13,8 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   loading?: boolean;
   emptyAction?: React.ReactNode;
+  /** Optional row class by row (e.g. status-based background) */
+  getRowClassName?: (row: T, index: number) => string;
 }
 
 export function DataTable<T>({
@@ -20,7 +22,8 @@ export function DataTable<T>({
   data,
   emptyMessage = "No records found",
   loading = false,
-  emptyAction
+  emptyAction,
+  getRowClassName,
 }: DataTableProps<T>) {
   if (loading) {
     return <TableSkeleton rows={5} />;
@@ -54,7 +57,14 @@ export function DataTable<T>({
 
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           {data.map((row, idx) => (
-            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+            <tr
+              key={idx}
+              className={
+                getRowClassName
+                  ? getRowClassName(row, idx)
+                  : "hover:bg-gray-50 dark:hover:bg-gray-700/50"
+              }
+            >
               {columns.map(col => (
                 <td key={col.key as string} className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                   {col.render
