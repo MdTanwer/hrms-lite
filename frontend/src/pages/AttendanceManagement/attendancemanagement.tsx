@@ -178,7 +178,7 @@ export default function AttendanceManagement() {
           setSelectedEmployee(null);
         }}
         title={selectedEmployee ? `Attendance - ${selectedEmployee.full_name}` : "Attendance"}
-        size="xl"
+        size="2xl"
       >
         <AttendanceDetails employee={selectedEmployee} />
       </Modal>

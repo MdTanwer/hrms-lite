@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
@@ -132,7 +132,7 @@ async def health_check():
         
         health_status = {
             "status": "healthy" if database_status == "healthy" else "unhealthy",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "environment": settings.ENVIRONMENT,
             "database": database_status,
             "uptime": round(uptime, 2)
@@ -151,7 +151,7 @@ async def health_check():
         
         error_response = {
             "status": "unhealthy",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "error": str(e),
             "database": "error"
         }

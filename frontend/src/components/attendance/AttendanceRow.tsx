@@ -26,12 +26,18 @@ export const AttendanceCell = ({ employee }: { employee?: Employee }) => {
   );
 };
 
-export const StatusBadge = ({ status }: { status: Attendance["status"] | string }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${getAttendanceColor(status)}`}>
-    <span>{getAttendanceIcon(status)}</span>
-    {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
-  </span>
-);
+export const StatusBadge = ({ status }: { status: Attendance["status"] | string }) => {
+  const s = (status || '').toLowerCase();
+  const label = s === 'na' || s === 'n/a' || s === ''
+    ? 'N/A'
+    : status!.charAt(0).toUpperCase() + status!.slice(1).replace('-', ' ');
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getAttendanceColor(status)}`}>
+      <span aria-hidden>{getAttendanceIcon(status)}</span>
+      {label}
+    </span>
+  );
+};
 
 export const DateCell = ({ date }: { date: string }) => (
   <div className="text-sm text-gray-900 dark:text-gray-100">

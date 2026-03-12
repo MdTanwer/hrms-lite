@@ -5,44 +5,18 @@ import Select from '@/components/ui/Select';
 import { useEmployeeAttendance, useEmployeeAttendanceStats } from '@/hooks/queries/useAttendance';
 import { StatusBadge } from '@/components/attendance/AttendanceRow';
 import AttendanceDetailsStats from '@/components/attendance/AttendanceDetailsStats';
-import { formatDate, getAttendanceRowClass } from '@/utils/attendanceUtils';
+import { ATTENDANCE_PAGE_SIZE, MONTHS } from '@/constants/attendance';
+import {
+  formatDateShort,
+  getDayOfWeek,
+  getDaysInMonth,
+  getMonthStartEnd,
+  getYears,
+  toDateKey,
+} from '@/utils/attendanceUtils';
 
-/** GET /attendance defaults: skip=0, limit=100; one month needs at most 31 */
-const ATTENDANCE_PAGE_SIZE = 100;
-
-const MONTHS = [
-  { value: '1', label: 'January' }, { value: '2', label: 'February' }, { value: '3', label: 'March' },
-  { value: '4', label: 'April' }, { value: '5', label: 'May' }, { value: '6', label: 'June' },
-  { value: '7', label: 'July' }, { value: '8', label: 'August' }, { value: '9', label: 'September' },
-  { value: '10', label: 'October' }, { value: '11', label: 'November' }, { value: '12', label: 'December' },
-];
-
-function getYears() {
-  const current = new Date().getFullYear();
-  return Array.from({ length: 5 }, (_, i) => ({
-    value: String(current - i),
-    label: String(current - i),
-  }));
-}
-
-function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-/** Returns 1st and last day of the given month as YYYY-MM-DD (full month range for API). */
-function getMonthStartEnd(year: number, month: number) {
-  const start = new Date(year, month - 1, 1); // 1st of month
-  const end = new Date(year, month, 0);       // last day of month
-  return {
-    startDate: toLocalDateString(start),
-    endDate: toLocalDateString(end),
-  };
-}
-
-type AttendanceRecord = {
+/** One row in the monthly attendance table (from API or placeholder with status N/A). */
+type AttendanceTableRow = {
   id?: string;
   date: string;
   status: string;
@@ -91,23 +65,64 @@ export default function AttendanceDetails({ employee }: AttendanceDetailsProps) 
     !!employeeId
   );
 
-  /** Backend returns display-ready list (id, date, status); use as-is */
-  const allRecords: AttendanceRecord[] = attendanceResponse?.data ?? [];
+  /** Backend returns display-ready list (id, date, status) */
+  const apiRecords: AttendanceTableRow[] = attendanceResponse?.data ?? [];
 
-  const totalFromApi = attendanceResponse?.total ?? allRecords.length;
+  /** Full month grid: one row per calendar day; missing days show status N/A */
+  const fullMonthRows = useMemo(() => {
+    const days = getDaysInMonth(yearNum, monthNum);
+    const byDate = new Map<string, AttendanceTableRow>();
+    for (const r of apiRecords) {
+      const key = toDateKey(r.date);
+      if (key) byDate.set(key, r);
+    }
+    return days.map((dateStr) => {
+      const existing = byDate.get(dateStr);
+      if (existing) return existing;
+      return { date: dateStr, status: 'NA', id: undefined } as AttendanceTableRow;
+    });
+  }, [yearNum, monthNum, apiRecords]);
 
   const columns = [
     {
+      key: 'sno',
+      header: 'S. No',
+      align: 'right' as const,
+      render: (_row: AttendanceTableRow, index: number) => (
+        <span className="text-gray-500 dark:text-gray-400 font-medium tabular-nums">
+          {index + 1}
+        </span>
+      ),
+    },
+    {
+      key: 'day',
+      header: 'Day',
+      align: 'left' as const,
+      render: (row: AttendanceTableRow) => (
+        <span className="text-gray-700 dark:text-gray-300 font-medium">
+          {getDayOfWeek(row.date)}
+        </span>
+      ),
+    },
+    {
       key: 'date',
       header: 'Date',
-      render: (row: AttendanceRecord) => (
-        <span className="text-sm text-gray-900 dark:text-gray-100">{formatDate(row.date)}</span>
+      align: 'left' as const,
+      render: (row: AttendanceTableRow) => (
+        <span className="text-gray-900 dark:text-gray-100">
+          {formatDateShort(row.date)}
+        </span>
       ),
     },
     {
       key: 'status',
       header: 'Status',
-      render: (row: AttendanceRecord) => <StatusBadge status={row.status} />,
+      align: 'center' as const,
+      render: (row: AttendanceTableRow) => (
+        <div className="flex justify-center">
+          <StatusBadge status={row.status} />
+        </div>
+      ),
     },
   ];
 
@@ -125,8 +140,6 @@ export default function AttendanceDetails({ employee }: AttendanceDetailsProps) 
   }
 
   const yearOptions = getYears();
-  const selectedMonthLabel = MONTHS.find((m) => m.value === month)?.label ?? month;
-  const periodLabel = `${selectedMonthLabel} ${year}`;
 
   return (
     <div className="space-y-6">
@@ -150,13 +163,6 @@ export default function AttendanceDetails({ employee }: AttendanceDetailsProps) 
           />
         </div>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Showing attendance for <span className="font-medium text-gray-700 dark:text-gray-300">{periodLabel}</span>
-        {totalFromApi > 0 && (
-          <span className="ml-1">({totalFromApi} record{totalFromApi !== 1 ? 's' : ''})</span>
-        )}
-      </p>
-
       <AttendanceDetailsStats
         totalLeave={statsFromApi?.leave_days ?? 0}
         totalAbsent={statsFromApi?.absent_days ?? 0}
@@ -167,13 +173,12 @@ export default function AttendanceDetails({ employee }: AttendanceDetailsProps) 
       />
 
       <div key={`table-${year}-${month}`}>
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date-wise attendance (1 month)</h4>
-        <DataTable<AttendanceRecord>
+        <DataTable<AttendanceTableRow>
           columns={columns}
-          data={allRecords}
-          emptyMessage="No attendance records for this month"
+          data={fullMonthRows}
+          emptyMessage="No dates in selected month"
           loading={isLoading}
-          getRowClassName={(row) => getAttendanceRowClass(row.status || '')}
+          getRowKey={(row) => row.date}
         />
       </div>
     </div>

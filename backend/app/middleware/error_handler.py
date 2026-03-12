@@ -53,7 +53,7 @@ def add_exception_handlers(app: FastAPI):
                 "field": exc.field_name,
                 "value": exc.field_value,
                 "resource_type": exc.resource_type,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -75,7 +75,7 @@ def add_exception_handlers(app: FastAPI):
                 "error_type": "not_found",
                 "resource_type": exc.resource_type,
                 "identifier": exc.identifier,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -97,7 +97,7 @@ def add_exception_handlers(app: FastAPI):
                 "error_type": "validation_error",
                 "field": exc.field_name,
                 "error_message": exc.error_message,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -146,7 +146,7 @@ def add_exception_handlers(app: FastAPI):
                 "error_type": "request_validation_error",
                 "errors": errors,
                 "error_count": len(errors),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -167,7 +167,7 @@ def add_exception_handlers(app: FastAPI):
                 "message": "Invalid ID format",
                 "error_type": "invalid_id",
                 "details": "The provided ID is not a valid MongoDB ObjectId format",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -206,7 +206,7 @@ def add_exception_handlers(app: FastAPI):
                 "error_type": "duplicate_key_error",
                 "field": field_info,
                 "details": "A record with this value already exists",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )
     
@@ -240,6 +240,6 @@ def add_exception_handlers(app: FastAPI):
                 "message": error_message,
                 "error_type": "server_error",
                 "request_id": request_id,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
             }
         )

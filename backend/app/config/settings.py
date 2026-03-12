@@ -146,17 +146,20 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list"""
+        if v is None:
+            return ["http://localhost", "http://127.0.0.1"]
         if isinstance(v, list):
             return v
         if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return ["http://localhost", "http://127.0.0.1"]
             if v.startswith("[") and v.endswith("]"):
-                # JSON array string - parse it
                 import json
                 try:
                     return json.loads(v)
                 except json.JSONDecodeError:
                     pass
-            # Comma-separated string
             return [i.strip() for i in v.split(",") if i.strip()]
         raise ValueError(f"Invalid ALLOWED_ORIGINS format: {v}")
     

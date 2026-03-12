@@ -1,0 +1,69 @@
+# Production compose: backend + frontend. MongoDB via Atlas (.env).
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: hrms-lite-backend:latest
+    container_name: hrms_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      MONGODB_URL: ${MONGODB_URL}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-hrms_lite}
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - hrms_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    image: hrms-lite-frontend:latest
+    container_name: hrms_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3002}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - hrms_network
+
+networks:
+  hrms_network:
+    driver: bridge

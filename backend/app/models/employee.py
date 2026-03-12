@@ -1,5 +1,6 @@
 import re
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 from bson import ObjectId
 
@@ -47,6 +48,7 @@ class EmployeeInDB(EmployeeBase):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str = Field(..., alias="_id", description="MongoDB document ID")
+    deleted_at: Optional[datetime] = Field(None, description="Set when employee is soft-deleted")
 
     @field_validator("id", mode="before")
     @classmethod

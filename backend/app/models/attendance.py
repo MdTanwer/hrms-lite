@@ -18,6 +18,15 @@ class AttendanceBase(BaseModel):
         if isinstance(v, ObjectId):
             return str(v)
         return v
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def date_from_datetime(cls, v):
+        """Accept datetime from MongoDB and coerce to date for API."""
+        if hasattr(v, "date") and callable(getattr(v, "date")):
+            return v.date()
+        return v
+
     date: date
     status: Literal["present", "absent", "half-day", "leave"] = "present"
     notes: Optional[str] = None

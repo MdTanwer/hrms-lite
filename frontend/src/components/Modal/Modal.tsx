@@ -1,30 +1,35 @@
-import React from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
-interface ModalProps {
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  children: ReactNode;
+  size?: ModalSize;
   showCloseButton?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({
+const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+  '2xl': 'max-w-6xl',
+};
+
+const DEFAULT_MODAL_SIZE: ModalSize = 'md';
+
+function Modal({
   isOpen,
   onClose,
   title,
   children,
-  size = 'md',
-  showCloseButton = true
-}) => {
-  const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
+  size = DEFAULT_MODAL_SIZE,
+  showCloseButton = true,
+}: ModalProps): React.ReactElement {
+  const handleBackdropClick = (e: MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -38,11 +43,11 @@ const Modal: React.FC<ModalProps> = ({
       onClick={handleBackdropClick}
     >
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all duration-300 ${
+        className={`flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-h-[calc(100vh-2rem)] ${MODAL_SIZE_CLASSES[size]} transform transition-all duration-300 ${
           isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           {showCloseButton && (
             <button
@@ -66,12 +71,12 @@ const Modal: React.FC<ModalProps> = ({
           )}
         </div>
         
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto min-h-0 flex-1">
           {children}
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default Modal;
